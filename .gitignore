@@ -1,0 +1,6 @@
+*.pdf
+*.mp4
+*.txt
+.venv
+*.webm
+*.gdoc
