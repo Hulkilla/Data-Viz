@@ -6,7 +6,7 @@ library(timevis)
 install.packages("jsonlite")
 library(jsonlite)
 
-italy_presidents <- fromJSON("C:/Users/USER/Desktop/OUC/Mi unidad/Visualización de datos/Data-Viz/PEC 2/italy-presidents.json")
+italy_presidents <- fromJSON("italy-presidents.json")
 
 # Cambiar el nombre de varias columnas a la vez
 colnames(italy_presidents)[c(4, 5)] <- c("start", "end")
