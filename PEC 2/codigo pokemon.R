@@ -1,17 +1,3 @@
-# Instalar el paquete kaggler
-#install.packages("kaggler")
-#devtools::install_github("KoderKow/kaggler")
-#
-## Cargar el paquete
-#library(kaggler)
-#
-## Autenticarse con la API de Kaggle
-#kgl_auth(username = "hulkilla ", key = "e8f810eaa1347823f6554cc591c2a67a")
-#
-## Descargar un dataset
-#kgl_datasets_download_file(owner_dataset = "pokemongo", file_name = "pokemongo.csv")
-
-
 #install.packages("dendextend")
 #install.packages("circlize")
 #library(dendextend)
