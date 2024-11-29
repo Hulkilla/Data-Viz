@@ -192,13 +192,12 @@ ggplot(data=x, aes(x=adr)) +
 
 ```{r hist_adr_2}
 media_adr <- mean(x$adr, na.rm = TRUE)
-mediana_adr <- median(x$adr, na.rm = TRUE)
 
 ggplot(data=x, aes(x=adr, after_stat(density))) + 
   geom_histogram(bins=40, colour="black", fill = "white") +
   geom_density(size = 1, bw = 10, lwd = 1, colour = 4, fill = 4, alpha = 0.25) +
   geom_vline(aes(xintercept = media_adr), colour = "red", linetype = "dashed", size = 1) +
-  annotate("text", x = media_adr + 70, y = 0.01, label = paste("Media del gasto:", round(media_adr, 2)), colour = "red") +
+  annotate("text", x = media_adr + 90, y = 0.01, label = paste("Media del gasto:", round(media_adr, 2), "$/día"), colour = "red") +
   labs(
     title = "Distribución del gasto medio diario",
     subtitle = "La mayoría de los clientes gasta en torno a 100 $ por día"
@@ -409,32 +408,106 @@ ser interesantes.
 
 ## EJERCICIO: mejorar y desdoblar el gráfico anterior por tipo de hotel o por país de orígen. 
 
-```{r}
-# Agrupar la columna 'dia' por mes y año
-x$mes_anio <-paste0(x$arrival_date_year,'-',x$arrival_date_month)  # Redondear las fechas al primer día del mes
 
-# Crear el gráfico con las fechas agrupadas por mes
-ggplot(data=x, aes(x=mes_anio, fill=arrival_date_year)) + 
-  geom_bar(stat="count", position="dodge", width=0.8) +  # Agregar barras para contar las llegadas por mes
-  theme_light() +
-  facet_wrap(~ hotel) +  # Desdoblar por tipo de hotel
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotar las etiquetas del eje X para facilitar su lectura
-  labs(title="Distribución de las Fechas de Llegada por Año y Tipo de Hotel",
-       x="Mes y Año de Llegada",
-       y="Frecuencia",
-       fill="Año de Llegada")
+```{r}
+# Calcular la frecuencia de llegadas por día
+x_frecuencia <- x %>%
+  group_by(dia, arrival_date_year) %>%
+  summarise(frecuencia = n(), .groups = "drop")
+
+maximos_por_anio <- x_frecuencia %>%
+  group_by(arrival_date_year) %>%
+  filter(frecuencia == max(frecuencia)) %>%
+  ungroup()
+
+ggplot(data = x_frecuencia, aes(x = dia, y = frecuencia, group = arrival_date_year, fill = as.factor(arrival_date_year))) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) +  # Barras agrupadas
+  geom_smooth(aes(color = as.factor(arrival_date_year)), method = "loess", formula = y ~ x, se = FALSE, size = 1) +  # Línea suavizada
+  geom_text(data = maximos_por_anio, 
+            aes(label = paste0(day(dia), "-", month(dia, label = TRUE, abbr = TRUE), ": ", frecuencia)),
+            vjust = -0.5, hjust = 0.5, size = 3) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b - %y") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0, size = 16, face = "bold"),       
+        plot.subtitle = element_text(hjust = 0, size = 12, face = "italic"),
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  labs(title = "Distribución de llegadas por día y año",
+       subtitle = "Periodo: 2015-2017",
+       x = "Fecha de llegada",
+       y = "Número de llegadas",
+       fill = "Año de llegada",
+       color = "Año de llegada")  # Agregar leyenda para la línea
+
+```
+
+```{r}
+x_frecuencia <- x %>%
+  group_by(dia, arrival_date_year, hotel) %>%  # Incluir 'hotel' en la agrupación
+  summarise(frecuencia = n(), .groups = "drop")
+
+maximos_por_anio <- x_frecuencia %>%
+  group_by(arrival_date_year, hotel) %>%
+  filter(frecuencia == max(frecuencia)) %>%
+  ungroup()
+
+ggplot(data = x_frecuencia, aes(x = dia, y = frecuencia, group = arrival_date_year, fill = as.factor(arrival_date_year))) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) +  # Barras agrupadas
+  geom_smooth(aes(color = as.factor(arrival_date_year)), method = "loess", formula = y ~ x, se = FALSE, size = 1) +  # Línea suavizada
+  geom_text(data = maximos_por_anio, 
+            aes(label = paste0(day(dia), "-", month(dia, label = TRUE, abbr = TRUE), ": ", frecuencia)),
+             hjust = -0.1, size = 3) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b - %y") +
+  facet_wrap(~ hotel, scales = "free_y", nrow = 2) +  # Desdoblar por tipo de hotel
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0, size = 16, face = "bold"),       
+        plot.subtitle = element_text(hjust = 0, size = 12, face = "italic"),
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  labs(title = "Distribución de llegadas por día y año",
+       subtitle = "Periodo: 2015-2017",
+       x = "Fecha de llegada",
+       y = "Número de llegadas",
+       fill = "Año de llegada",
+       color = "Año de llegada")  # Agregar leyenda para la línea
+
 ```
 ```{r}
-# Crear el gráfico con las fechas agrupadas por mes
-ggplot(data=x, aes(x=mes_anio, fill=arrival_date_year)) + 
-  geom_bar(stat="count", position="dodge", width=0.8) +  # Agregar barras para contar las llegadas por mes
-  theme_light() +
-  facet_wrap(~ categoria) +  # Desdoblar por tipo de hotel
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotar las etiquetas del eje X para facilitar su lectura
-  labs(title="Distribución de las Fechas de Llegada por Año y Tipo de Hotel",
-       x="Mes y Año de Llegada",
-       y="Frecuencia",
-       fill="Año de Llegada")
+x_frecuencia <- x %>%
+  group_by(dia, arrival_date_year, categoria) %>%  # Incluir 'hotel' en la agrupación
+  summarise(frecuencia = n(), .groups = "drop")
+
+maximos_por_anio <- x_frecuencia %>%
+  group_by(arrival_date_year, categoria) %>%
+  filter(frecuencia == max(frecuencia)) %>%
+  ungroup()
+
+ggplot(data = x_frecuencia, aes(x = dia, y = frecuencia, group = arrival_date_year, fill = as.factor(arrival_date_year))) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.5) +  # Barras agrupadas
+  geom_smooth(aes(color = as.factor(arrival_date_year)), method = "loess", formula = y ~ x, se = FALSE, size = 1) +  # Línea suavizada
+  geom_text(data = maximos_por_anio, 
+            aes(label = paste0(day(dia), "-", month(dia, label = TRUE, abbr = TRUE), ": ", frecuencia)),
+             hjust = -0.1, size = 3) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b - %y") +
+  facet_wrap(~ categoria, scales = "free", nrow = 2) +  # Desdoblar por tipo de hotel
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0, size = 16, face = "bold"),       
+        plot.subtitle = element_text(hjust = 0, size = 12, face = "italic"),
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  labs(title = "Distribución de llegadas por día y año",
+       subtitle = "Periodo: 2015-2017",
+       x = "Fecha de llegada",
+       y = "Número de llegadas",
+       fill = "Año de llegada",
+       color = "Año de llegada")  # Agregar leyenda para la línea
+
 ```
 
 Con el día calculado, junto con las variables stays_in_week/weekend_nights podemos tratar de categorizar manualmente el tipo de viaje, de acuerdo a los siguientes criterios (arbitrarios, claramente mejorables):
@@ -463,6 +536,42 @@ x$tipo <- ifelse(x$stays_in_weekend_nights == 0, "work",
           ifelse(x$stays_in_week_nights <= 5 & x$stays_in_weekend_nights < 3, "work+rest", 
           "rest")))))
 
+```
+
+```{r}
+library(ggplot2)
+
+# Gráfico para ver la distribución del tipo de viaje por número de adultos, niños y bebés
+ggplot(x, aes(x = tipo, fill = as.factor(tipo))) + 
+  geom_bar(stat = "count", position = "dodge") +
+  labs(title = "Distribución de tipo de viaje por número de personas",
+       x = "Tipo de viaje",
+       y = "Número de registros",
+       fill = "Tipo de viaje") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+x_long <- x %>%
+  pivot_longer(cols = c("babies", "children", "adults"), 
+               names_to = "category", 
+               values_to = "count")
+
+
+ggplot(data = x_long, aes(x = tipo, y = count, fill = category)) +
+  geom_bar(stat = "identity", position = "stack", alpha = 0.7) +  # Barras apiladas
+  scale_fill_manual(values = c("babies" = "orange", "children" = "green", "adults" = "blue")) +  # Colores personalizados
+  labs(title = "Distribución de número de personas por tipo de viaje",
+       x = "Tipo de viaje",
+       y = "Número de personas",
+       fill = "Categoría de persona") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+write.csv(x, "hotel_bookings_cleaning.csv", row.names = TRUE)
 ```
 
 Las posibilidades son infinitas: se puede enriquecer el dataset con datos de tipo
