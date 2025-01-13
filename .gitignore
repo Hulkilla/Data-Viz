@@ -5,3 +5,6 @@
 *.webm
 *.gdoc
 *.gslides
+*.csv
+.RData
+.RHistory
